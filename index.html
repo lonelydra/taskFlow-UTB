@@ -402,7 +402,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
 <!-- ===== CONFIG ===== -->
 <script>
 // << ĐỔI URL NÀY THÀNH URL APPS SCRIPT CỦA BẠN >>
-const API_URL = 'https://script.google.com/macros/s/AKfycbznB0M2izxN8l-lC7B_Pofue1Mhz75CPEjXMCGsIfcAaaiDnmJuovyxHQoKuzDZzodG/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwolyUHDgZbq9I8LrTimVGs8atQF6fbVJKytwGnDzjpIfOR_AZjRV8ea-MWzpHGdkIW/exec';
 
 // Nếu muốn test offline (không cần Apps Script), dùng mock mode:
 const MOCK_MODE = false; // Đổi sang false khi đã deploy Apps Script
@@ -835,9 +835,12 @@ async function showApp() {
   document.getElementById('sidebarName').textContent = u.name;
   document.getElementById('sidebarRole').textContent = ROLES[u.role] || u.role;
 
-  // Ẩn menu quản lý nếu không phải manager/supervisor
+ // Ẩn/Hiện menu quản lý dựa theo role
   if (u.role === 'employee') {
     document.getElementById('nav-manager-section').style.display = 'none';
+  } else {
+    // THÊM DÒNG NÀY: Khôi phục lại hiển thị nếu là manager hoặc supervisor
+    document.getElementById('nav-manager-section').style.display = 'block'; 
   }
 
   // Load data chung
@@ -1224,9 +1227,27 @@ async function submitRating(taskId) {
 }
 
 async function quickStatus(taskId, status) {
-  const res = await api('updateTaskStatus', { taskId, status });
-  if (res.success) { showToast('Cập nhật trạng thái ✓', 'success'); closeModal(); await refreshTasks(); }
-  else showToast(res.message, 'error');
+  closeModal(); // Đóng modal ngay lập tức
+  
+  // 1. Cập nhật thẳng vào biến state ở Frontend để UI đổi màu ngay lập tức
+  const taskIndex = state.tasks.findIndex(t => t.id === taskId);
+  if (taskIndex !== -1) {
+    state.tasks[taskIndex].status = status;
+    // Vẽ lại giao diện ngay tắp lự
+    if (state.currentPage === 'tasks') renderTaskList(state.tasks);
+    else if (state.currentPage === 'kanban') renderKanbanBoard();
+  }
+
+  // 2. Gọi API chạy ngầm phía sau (không cần block UI)
+  api('updateTaskStatus', { taskId, status }).then(res => {
+    if (res.success) {
+      showToast('Cập nhật trạng thái thành công', 'success');
+    } else {
+      // Nếu lỗi mới báo và load lại data cũ
+      showToast('Lỗi đồng bộ!', 'error');
+      refreshTasks(); 
+    }
+  });
 }
 
 async function deleteTask(taskId) {
