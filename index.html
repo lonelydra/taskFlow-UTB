@@ -402,7 +402,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
 <!-- ===== CONFIG ===== -->
 <script>
 // << ĐỔI URL NÀY THÀNH URL APPS SCRIPT CỦA BẠN >>
-const API_URL = 'https://script.google.com/macros/s/AKfycbyQowZBJdprVZoME012W9eROkBuFpip2ueOYSLsjSPpdDXlXeoILwcsZqyd_61PnkvB/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbznB0M2izxN8l-lC7B_Pofue1Mhz75CPEjXMCGsIfcAaaiDnmJuovyxHQoKuzDZzodG/exec';
 
 // Nếu muốn test offline (không cần Apps Script), dùng mock mode:
 const MOCK_MODE = false; // Đổi sang false khi đã deploy Apps Script
@@ -566,6 +566,9 @@ async function api(action, data = {}) {
   try {
     const res = await fetch(API_URL, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8' // Bổ sung dòng này
+      },
       body: JSON.stringify({ action, token: state.token, ...data })
     });
     return await res.json();
